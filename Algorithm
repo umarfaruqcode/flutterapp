@@ -1,0 +1,64 @@
+Note:
+//This is an example of how it can be converted but it doesn't neccessarily guarantee that this is the best or the only way to do it, 
+//since it heavily depends on the structure of the thermalComfortData and the variables it's using, 
+//This is also an example with assumption that the thermalComfortData is list of object with variables such as temperatureC, MR, humidity, clothingNumCumulative, etc.
+
+var ts2 = thermalComfortData;
+ts2 = ts2.where((t) => t.temperatureC > 0).toList();
+ts2 = ts2.map((t) => t..m = t.mr * 58).toList();
+ts2 = ts2.map((t) => t..mw = t.m).toList();
+ts2 = ts2.map((t) => t..ta = t.temperatureC).toList();
+ts2 = ts2.map((t) => t..rh = t.humidity).toList();
+ts2 = ts2.map((t) => t..clo = t.clothingNumCumulative).toList();
+
+ts2 = ts2.map((t) => t..fnps = pow(2.75, (16.6536 - (4030.183 / (t.ta + 235)))).toList();
+ts2 = ts2.map((t) => t..pa = t.rh * 10 * t.fnps).toList();
+ts2 = ts2.map((t) => t..icl = 0.155 * t.clo).toList();
+ts2 = ts2.map((t) => t..fcl = (t.icl < 0.078) ? 1 + 1.29 * t.icl : 1.05 + 0.645 * t.icl).toList();
+
+ts2 = ts2.map((t) => t..hcf = 12.1 * pow(0.1, 0.5)).toList();
+ts2 = ts2.map((t) => t..tr = t.ta).toList();
+ts2 = ts2.map((t) => t..tra = t.tr + 273).toList();
+ts2 = ts2.map((t) => t..taa = t.ta + 273).toList();
+
+#-----------------------------------------------------------------------------
+ts2 = ts2.map((t) => t..tcla = t.taa + ((35.5 - t.ta) / (3.5 * (6.45 * t.icl + 0.1)))).toList();
+ts2 = ts2.map((t) => t..p1 = t.icl * t.fcl).toList();
+ts2 = ts2.map((t) => t..p2 = t.p1 * 3.96).toList();
+ts2 = ts2.map((t) => t..p3 = t.p1 * 100).toList();
+ts2 = ts2.map((t) => t..p4 = t.p1 * t.taa).toList();
+ts2 = ts2.map((t) => t..p5 = 308.7 - 0.028 * t.mw + t.p2 * pow(t.tra / 100, 4)).toList();
+
+ts2 = ts2.map((t) => t..xn = t.tcla / 100).toList();
+ts2 = ts2.map((t) => t..xf = t.xn).toList();
+
+for (var i = 1; i <= 150; i++) {
+    ts2 = ts2.map((t) => t..xf = (t.xf + t.xn) / 2).toList();
+    ts2 = ts2.map((t) => t..hcf = 12.1 * pow(0.1, 0.5)).toList();
+    ts2 = ts2.map((t) => t..hcn = 2.38 * pow(abs(100 * t.xf - t.taa), 0.25)).toList();
+    ts2 = ts2.map((t) => t..hc = (t.hcf < t.hcn) ? t.hcf : t.hcn).toList();
+    ts2 = ts2.map((t) => t..xn = (t.p5 + t.p4 * t.hc - t.p2 * pow(t.xf, 4)) / (100 + t.p3 * t.hc)).toList();
+}
+
+ts2 = ts2.map((t) => t..s = (t.xn - t.xf)).toList();
+ts2 = ts2.map((t) => t..tcl = 100 * t.xn - 273).toList();
+#----------------------------------------------------------------------------
+ts2 = ts2.map((t) => t..hl1 = 3.05 * 0.001 * (5733 - (6.99 * t.mw) - t.pa)).toList();
+ts2 = ts2.map((t) => t..hl2 = (t.mr > 58) ? 0.42 * (t.mr - 58) : 0).toList();
+ts2 = ts2.map((t) => t..hl3 = 1.7 * 0.00001 * t.mr * (5867 - t.pa)).toList();
+ts2 = ts2.map((t) => t..hl4 = 0.0014 * t.mr * (34 - t.ta)).toList();
+ts2 = ts2.map((t) => t..hl5 = 3.96 * pow(10, -8) * t.fcl * (pow(t.xn, 4) - pow(t.tra / 100, 4))).toList();
+ts2 = ts2.map((t) => t..hl6 = t.fcl * t.hc * (t.tcl - t.ta)).toList();
+#----------------------------------------------------------------------------
+ts2 = ts2.map((t) => t..ts = 0.303 * pow(2.76, -0.036 * t.m) + 0.028).toList();
+ts2 = ts2.map((t) => t..pmv = t.ts * (t.mw - t.hl1 - t.hl2 - t.hl3 - t.hl4 - t.hl5 - t.hl6)).toList();
+ts2 = ts2.map((t) => t..e = t.pmv - t.thermalSensationNum + 4).toList();
+ts2 = ts2.where((t) => t.thermalSensationNum > 0).toList();
+
+final summary = {
+    "mean": ts2.map((t) => t.e).fold(0, (p, c) => p + c) / ts2.length,
+    "max": ts2.map((t) => t.e).fold(0, (p, c) => max(p, c)),
+    "min": ts2.map((t) => t.e).fold(0, (p, c) => min(p, c)),
+    "count": ts2.length,
+};
+
