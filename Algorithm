@@ -1,7 +1,9 @@
-Note:
-//This is an example of how it can be converted but it doesn't neccessarily guarantee that this is the best or the only way to do it, 
+// Note:
+//This is an example of how it can be converted but it doesn't necessarily guarantee that this is the best or the only way to do it, 
 //since it heavily depends on the structure of the thermalComfortData and the variables it's using, 
 //This is also an example with assumption that the thermalComfortData is list of object with variables such as temperatureC, MR, humidity, clothingNumCumulative, etc.
+
+// This code is written in dart
 
 var ts2 = thermalComfortData;
 ts2 = ts2.where((t) => t.temperatureC > 0).toList();
@@ -21,7 +23,8 @@ ts2 = ts2.map((t) => t..tr = t.ta).toList();
 ts2 = ts2.map((t) => t..tra = t.tr + 273).toList();
 ts2 = ts2.map((t) => t..taa = t.ta + 273).toList();
 
-#-----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+
 ts2 = ts2.map((t) => t..tcla = t.taa + ((35.5 - t.ta) / (3.5 * (6.45 * t.icl + 0.1)))).toList();
 ts2 = ts2.map((t) => t..p1 = t.icl * t.fcl).toList();
 ts2 = ts2.map((t) => t..p2 = t.p1 * 3.96).toList();
@@ -42,14 +45,18 @@ for (var i = 1; i <= 150; i++) {
 
 ts2 = ts2.map((t) => t..s = (t.xn - t.xf)).toList();
 ts2 = ts2.map((t) => t..tcl = 100 * t.xn - 273).toList();
-#----------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------
+
 ts2 = ts2.map((t) => t..hl1 = 3.05 * 0.001 * (5733 - (6.99 * t.mw) - t.pa)).toList();
 ts2 = ts2.map((t) => t..hl2 = (t.mr > 58) ? 0.42 * (t.mr - 58) : 0).toList();
 ts2 = ts2.map((t) => t..hl3 = 1.7 * 0.00001 * t.mr * (5867 - t.pa)).toList();
 ts2 = ts2.map((t) => t..hl4 = 0.0014 * t.mr * (34 - t.ta)).toList();
 ts2 = ts2.map((t) => t..hl5 = 3.96 * pow(10, -8) * t.fcl * (pow(t.xn, 4) - pow(t.tra / 100, 4))).toList();
 ts2 = ts2.map((t) => t..hl6 = t.fcl * t.hc * (t.tcl - t.ta)).toList();
-#----------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------
+
 ts2 = ts2.map((t) => t..ts = 0.303 * pow(2.76, -0.036 * t.m) + 0.028).toList();
 ts2 = ts2.map((t) => t..pmv = t.ts * (t.mw - t.hl1 - t.hl2 - t.hl3 - t.hl4 - t.hl5 - t.hl6)).toList();
 ts2 = ts2.map((t) => t..e = t.pmv - t.thermalSensationNum + 4).toList();
